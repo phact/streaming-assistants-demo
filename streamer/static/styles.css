@@ -1,0 +1,17 @@
+#appContainer {
+    width: 80%;
+    margin: auto;
+    margin-bottom: 20px;
+}
+
+#scene {
+    width: 100%;
+    margin-bottom: 20px; /* Space between scene and interaction row */
+}
+
+#sceneImage, .sceneImage {
+    width: 40%;
+    display: block;
+    margin: auto;
+    height: auto;
+}

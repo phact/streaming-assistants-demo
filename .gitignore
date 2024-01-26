@@ -1,0 +1,7 @@
+.env
+__pycache__/
+cache/
+.idea
+*/__pycache__/*
+assistant_id.txt
+streamer/static/img/*/

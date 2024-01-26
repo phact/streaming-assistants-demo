@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interactive Story App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+	<form id="createForm">
+		<input type="text" id="contentInput" placeholder="Make more" required>
+		<button type="submit">Generate</button>
+	</form>
+	<div id="container"></div>
+    <button id="saveButton" style="display:none" onclick="save()">Save</button>
+	<div id="status" style="display:none">loading</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
