@@ -26,7 +26,7 @@ function processChunk(chunk) {
         if (line.startsWith('data:')) {
             const data = line.replace('data: ', '');
             console.log('Data:', data);
-            displayitterationsForEditing(JSON.parse(data))
+            displayIterationsForEditing(JSON.parse(data))
         }
     });
 }
@@ -40,7 +40,7 @@ document.getElementById('createForm').addEventListener('submit', function(e) {
     streamSSE(`/generate_prompts?content=${content}`);
 });
 
-function displayitterationsForEditing(story) {
+function displayIterationsForEditing(response_data) {
     const statusText = document.getElementById('status');
     const saveButton = document.getElementById('saveButton');
     statusText.value = "loading"
@@ -50,11 +50,11 @@ function displayitterationsForEditing(story) {
     if (generated_data === {}){
         container.innerHTML = ''; // Clear previous content
     }
-    generated_data = story
+    generated_data = response_data
 
-    Object.keys(story).forEach((name) => {
+    Object.keys(response_data).forEach((name) => {
         gen_name = name
-        scenes = story[name]
+        scenes = response_data[name]
         scenes.forEach((scene, index) => {
             var append = false;
             let sceneElement = document.getElementById(`scene${index}`)
@@ -65,10 +65,14 @@ function displayitterationsForEditing(story) {
             }
             imagePromptElement = document.getElementById(`imagePrompt${index}`)
             if (imagePromptElement != null){
-                currentPrompt = document.getElementById(`imagePrompt${index}`)?.value;
                 if (scene.imagePrompt != undefined) {
+                    currentPrompt = imagePromptElement.value;
                     if (currentPrompt === 'undefined') {
-                        generateitterationImage(scene?.imagePrompt, encodeURI(gen_name), index)
+                        imagePromptElement.value = scene?.imagePrompt
+                        generateImage(scene?.imagePrompt, encodeURI(gen_name), index)
+                    }
+                    else{
+                        console.log("currentPrompt:"+currentPrompt)
                     }
                 }
             }
@@ -76,7 +80,8 @@ function displayitterationsForEditing(story) {
             sceneImageSrc = ""
             sceneImageAlt = ""
             // TODO: do this for other editable elements
-            if (sceneImage?.src != null && sceneImage?.src != 'http://localhost:8001/admin.html') {
+            if (sceneImage?.src != null && sceneImage?.src.startsWith('http')) {
+                console.log("this image has already been generated, not changing src or alt")
                 sceneImageSrc = sceneImage.src
                 sceneImageAlt = sceneImage.alt
                 generated_data[name][index].sceneImage = sceneImageSrc
@@ -86,7 +91,7 @@ function displayitterationsForEditing(story) {
                     <h3>itteration ${index + 1}</h3>
                     <textarea id="sceneDescription${index}" class="scene-description">${scene?.description}</textarea>
                     <textarea id="imagePrompt${index}" class="image-prompt">${scene?.imagePrompt}</textarea>
-                    <button onclick="generateitterationImage(null, '${encodeURI(name)}', ${index})">Re-generate Image</button>
+                    <button onclick="generateImage(null, '${encodeURI(name)}', ${index})">Re-generate Image</button>
                     <img class="sceneImage" id="sceneImage${index}" src="${sceneImageSrc}" alt="${sceneImageAlt}">
             `;
             if (sceneElement.innerHTML !== proposedInner) {
@@ -99,7 +104,7 @@ function displayitterationsForEditing(story) {
     });
 }
 
-function generateitterationImage(imagePrompt, name, sceneIndex) {
+function generateImage(imagePrompt, name, sceneIndex) {
     if (imagePrompt == null){
         imagePrompt = document.getElementById("imagePrompt"+sceneIndex)?.value
     }
