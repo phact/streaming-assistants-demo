@@ -39,7 +39,7 @@ def make_image(gen_name, scene_index, prompt):
         print(f"OpenAI RATE LIMIT error {e.status_code}: (e.response)")
         raise
     except openai.APIStatusError as e:
-        print(f"OpenAI STATUS error {e.status_code}: (e.response)")
+        print(f"OpenAI STATUS error {e.status_code}: (e.response) \n Message {e.message} \n Prompt {prompt}")
         raise
     except openai.BadRequestError as e:
         print(f"OpenAI BAD REQUEST error {e.status_code}: (e.response)")
