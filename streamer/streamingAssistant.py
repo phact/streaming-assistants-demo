@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import re
 from partial_json_parser import loads, Allow
 from partial_json_parser.options import STR, OBJ, ARR
-from streamer.streaming_assistant import patch
+from streaming_assistants import patch
 
 
 def extract_content(text):
@@ -102,9 +102,8 @@ For a prompt `a cat eating ice cream` you might return the following json:
 do not return text or markdown, only json
 """
 
-model="gpt-4-1106-preview"
-#model="gpt-4-turbo-preview"
-#model = "gpt-3.5-turbo-1106"
+model=os.getenv("model", "gpt-4-1106-preview")
+print(f"using model: {model}")
 
 def create_assistant():
     assistant = client.beta.assistants.create(
