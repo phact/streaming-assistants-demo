@@ -20,7 +20,7 @@ python-dotenv = "^1.0.0"
 fastapi = "^0.108.0"
 uvicorn = "^0.25.0"
 partial-json-parser = "^0.1.2.1"
-streaming-assistants = "^0.3.0"
+streaming-assistants = "^0.9.0"
 
 [tool.poetry.scripts]
 start = "run:main"

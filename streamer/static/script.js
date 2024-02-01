@@ -96,7 +96,9 @@ function displayIterations(response_data) {
                     <h4>Prompt</h4>
                     <span id="imagePrompt${index}" class="image-prompt">${scene?.imagePrompt}</span>
                     <img class="sceneImage" id="sceneImage${index}" src="${sceneImageSrc}" alt="${sceneImageAlt}">
-                    <button onclick="generateImage("${scene?.imagePrompt}", '${encodeURI(name)}', ${index})">Re-generate Image</button>
+                    <button onclick="generateImage('${encodeURI(scene?.imagePrompt)}', '${encodeURI(name)}',${index})">
+                      Re-generate Image
+                    </button>
             `;
             if (sceneElement.innerHTML !== proposedInner) {
                 sceneElement.innerHTML = proposedInner

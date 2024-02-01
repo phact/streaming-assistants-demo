@@ -2,11 +2,11 @@ import json
 import os
 import time
 from fastapi import HTTPException
-from openai import OpenAI, AsyncOpenAI, Stream
+from openai import OpenAI
 from dotenv import load_dotenv
 import re
-from partial_json_parser import loads, Allow
-from partial_json_parser.options import STR, OBJ, ARR
+from partial_json_parser import loads
+from partial_json_parser.options import OBJ, ARR
 from streaming_assistants import patch
 
 
@@ -40,17 +40,12 @@ def extract_content(text):
 
 load_dotenv("./.env")
 
-OPENAI_API_KEY=os.getenv("OPENAI_API_KEY")
-ASTRA_DB_APPLICATION_TOKEN=os.getenv("ASTRA_DB_APPLICATION_TOKEN")
-base_url=os.getenv("base_url", "https://open-assistant-ai.astra.datastax.com/v1")
+model=os.getenv("model", "gpt-4-1106-preview")
+print(f"using model: {model}")
 
-client = OpenAI(
-    base_url=base_url,
-    api_key=OPENAI_API_KEY,
-    default_headers={
-        "astra-api-token": ASTRA_DB_APPLICATION_TOKEN,
-    }
-)
+
+# ensure the env vars for your model are set
+client = patch(OpenAI())
 
 
 make_prompts_function = {
@@ -113,8 +108,7 @@ For a prompt `a hungry cat` you might return the following json:
 do not return text or markdown, only json
 """
 
-model=os.getenv("model", "gpt-4-1106-preview")
-print(f"using model: {model}")
+
 
 def create_assistant():
     assistant = client.beta.assistants.create(
@@ -126,7 +120,7 @@ def create_assistant():
       #    "function": make_prompts_function
       #}]
     )
-    print(assistant)
+    print(f"assistant created, id:{assistant.id}")
     # write assistant id to file
     with open('assistant_id.txt', 'w') as f:
         f.write(assistant.id)
@@ -158,7 +152,7 @@ def run_thread(assistant_id, thread_id):
         assistant_id=assistant_id,
     )
 
-    print(run)
+    print(f"run created: id:{run.id}")
     #runs = client.beta.threads.runs.list(
     #        thread_id=thread_id
     #)
@@ -195,6 +189,7 @@ def run_thread(assistant_id, thread_id):
             done = True
         text = text.replace("\n","")
         text = text.replace("\t","")
+        print(text)
 
         if text is not None and text != "":
             try:
