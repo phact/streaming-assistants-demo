@@ -1,52 +1,28 @@
 import json
-import os
 import time
 from fastapi import HTTPException
 from openai import OpenAI
 from dotenv import load_dotenv
-import re
 from partial_json_parser import loads
 from partial_json_parser.options import OBJ, ARR
 from streaming_assistants import patch
 
-
-def extract_content(text):
-    # if starts with {
-    if text.startswith('{'):
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            print("Content is not valid JSON.")
-            return None
-
-    # Regex pattern to find content within triple backticks
-    pattern = r"```(?:json)?\n(.*?)```"
-
-    # re.DOTALL is used to make the dot match also newlines
-    match = re.search(pattern, text, re.DOTALL)
-
-    if match:
-        # Extract the content inside the backticks
-        content = match.group(1)
-        try:
-            # Parse the JSON string into a Python dictionary
-            return json.loads(content)
-        except json.JSONDecodeError:
-            print("Content inside the backticks is not valid JSON.")
-            return None
-    else:
-        print("no match, content is invalid JSON")
-        raise HTTPException(status_code=500, detail="Internal Error")
-
 load_dotenv("./.env")
 
-model=os.getenv("model", "gpt-4-1106-preview")
-print(f"using model: {model}")
+model="gpt-4-1106-preview"
+#model="gpt-3.5-turbo"
+#model="cohere/command"
+#model="perplexity/mixtral-8x7b-instruct"
+#model="perplexity/pplx-70b-online"
+#model="anthropic.claude-v2"
+#model="gemini/gemini-pro"
+#model = "meta.llama2-13b-chat-v1"
 
+
+print(f"using model: {model}")
 
 # ensure the env vars for your model are set
 client = patch(OpenAI())
-
 
 make_prompts_function = {
   "name": "generation_name",
@@ -108,8 +84,6 @@ For a prompt `a hungry cat` you might return the following json:
 do not return text or markdown, only json
 """
 
-
-
 def create_assistant():
     assistant = client.beta.assistants.create(
       instructions=instructions,
@@ -128,38 +102,16 @@ def create_assistant():
     return assistant
 
 
-def get_assistant_id_from_file():
-    # if file exists, read assistant id from file
-    if not os.path.exists('assistant_id.txt'):
-        create_assistant()
-    with open('assistant_id.txt', 'r') as f:
-        assistant_id = f.read()
-    return assistant_id
-
 def run_thread(assistant_id, thread_id):
     global client
     time.sleep(2)
     
-    #runs = client.beta.threads.runs.list(
-    #        thread_id=thread_id
-    #)
-    #print(runs)
-
-    #print("creating run" )
-    #print(f"for thread {thread_id}" )
     run = client.beta.threads.runs.create(
         thread_id=thread_id,
         assistant_id=assistant_id,
     )
 
     print(f"run created: id:{run.id}")
-    #runs = client.beta.threads.runs.list(
-    #        thread_id=thread_id
-    #)
-    #print(runs)
-
-    
-    print("retrieving:" )
     while (True):
         run = client.beta.threads.runs.retrieve(
             thread_id=thread_id,
@@ -172,14 +124,14 @@ def run_thread(assistant_id, thread_id):
             break
         time.sleep(1)
 
-    patchedClient = patch(client)
-    response = patchedClient.beta.threads.messages.list(
+    response = client.beta.threads.messages.list(
         thread_id=thread_id,
         stream=True,
     )
     done = False
+    text=""
     for part in response:
-        text = part.data[0].content[0].text.value
+        text += part.data[0].content[0].delta.value
         if text.startswith("```json"):
             text = text[7:]
         elif text.startswith("```"):
@@ -217,21 +169,11 @@ def continue_thread(file_ids, assistant_id, thread_id, content):
     return run_thread(assistant_id, thread_id)
 
 
+assistant = create_assistant()
+thread = client.beta.threads.create()
 def make_prompts(content):
-    assistant_id = get_assistant_id_from_file()
-    assistants = client.beta.assistants.list()
-    assistant_exists = False
-
-	# TODO maybe no .data? check this
-    for asnt in assistants.data:
-        if asnt.id == assistant_id:
-            assistant_exists = True
-
-    if not assistant_exists:
-        assistant_id = create_assistant().id
-
-    thread = client.beta.threads.create()
-    print(thread)
+    global assistant
+    global thread
+    assistant_id = assistant.id
     file_ids = []
     return continue_thread(file_ids, assistant_id, thread.id, content)
-
